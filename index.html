@@ -357,11 +357,11 @@
       <div class="section-sep">Subir Licencia</div>
       <div class="form-group">
         <label class="form-label">Cara A</label>
-        <input type="file" class="form-input" id="f-lic-a" accept="image/*" style="padding:0.4rem" />
+        <input type="file" class="form-input" id="f-lic-a" accept="image/*,.pdf" style="padding:0.4rem" />
       </div>
       <div class="form-group">
         <label class="form-label">Cara B</label>
-        <input type="file" class="form-input" id="f-lic-b" accept="image/*" style="padding:0.4rem" />
+        <input type="file" class="form-input" id="f-lic-b" accept="image/*,.pdf" style="padding:0.4rem" />
       </div>
       <div class="form-group full" id="upload-status" style="display:none">
         <div id="upload-msg" style="font-size:0.85rem;color:var(--success)"></div>
@@ -706,15 +706,44 @@
 
   const STORAGE_URL = 'https://dbydtwkzknbpifneznsu.supabase.co/storage/v1/object/public/Licencias';
 
-  function verLicencia(nombre) {
-    const url1 = `${STORAGE_URL}/${nombre}1.png`;
-    const url2 = `${STORAGE_URL}/${nombre}2.png`;
-    document.getElementById('lic-img1').src = url1;
-    document.getElementById('lic-img2').src = url2;
-    document.getElementById('lic-dl1').href = url1;
-    document.getElementById('lic-dl2').href = url2;
+  async function tryUrl(nombre, num) {
+    const exts = ['png', 'jpg', 'jpeg', 'pdf'];
+    for (const ext of exts) {
+      const url = `${STORAGE_URL}/${nombre}${num}.${ext}`;
+      try {
+        const r = await fetch(url, {method:'HEAD'});
+        if (r.ok) return {url, ext};
+      } catch(e) {}
+    }
+    return null;
+  }
+
+  async function verLicencia(nombre) {
     document.getElementById('lic-nombre').textContent = nombre;
     document.getElementById('lic-modal').classList.add('open');
+    document.getElementById('lic-img1').src = '';
+    document.getElementById('lic-img2').src = '';
+
+    const [r1, r2] = await Promise.all([tryUrl(nombre, 1), tryUrl(nombre, 2)]);
+
+    if (r1) {
+      if (r1.ext === 'pdf') {
+        document.getElementById('lic-img1').src = '';
+        document.getElementById('lic-img1').parentElement.innerHTML = `<a href="${r1.url}" target="_blank" style="color:var(--accent);font-weight:600">📄 Abrir PDF Cara A</a>`;
+      } else {
+        document.getElementById('lic-img1').src = r1.url;
+        document.getElementById('lic-dl1').href = r1.url;
+      }
+    }
+    if (r2) {
+      if (r2.ext === 'pdf') {
+        document.getElementById('lic-img2').src = '';
+        document.getElementById('lic-img2').parentElement.innerHTML = `<a href="${r2.url}" target="_blank" style="color:var(--accent);font-weight:600">📄 Abrir PDF Cara B</a>`;
+      } else {
+        document.getElementById('lic-img2').src = r2.url;
+        document.getElementById('lic-dl2').href = r2.url;
+      }
+    }
   }
 
   function verLicencia(nombre) {
