@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CC Irunés · Gestión de Corredores</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f5f5;
+    --surface: #ffffff;
+    --surface2: #f0f0f0;
+    --border: #e0e0e0;
+    --accent: #1a3a5c;
+    --accent2: #2e6da4;
+    --text: #1a1a1a;
+    --muted: #888;
+    --danger: #c0392b;
+    --success: #27ae60;
+    --warning: #e67e22;
+    --radius: 8px;
+    --cat-benjamin: #9b59b6;
+    --cat-alevin: #2980b9;
+    --cat-infantil: #27ae60;
+    --cat-cadete: #e67e22;
+    --cat-junior: #c0392b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+  /* LOGIN */
+  #login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .login-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 3rem; width: 360px;
+    display: flex; flex-direction: column; gap: 1.5rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  }
+  .login-logo { text-align: center; }
+  .login-logo span { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; }
+  .login-logo h1 { font-size: 1.4rem; font-weight: 600; color: var(--accent); margin-top: 0.5rem; }
+  .login-label { font-size: 0.8rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; }
+  .login-input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 0.9rem 1rem; color: var(--text);
+    font-family: 'DM Mono', monospace; font-size: 1.1rem; letter-spacing: 0.2em; outline: none; transition: border-color 0.2s;
+  }
+  .login-input:focus { border-color: var(--accent); }
+  .login-btn {
+    width: 100%; background: var(--accent); color: #fff; border: none;
+    border-radius: var(--radius); padding: 0.9rem; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: opacity 0.2s;
+  }
+  .login-btn:hover { opacity: 0.85; }
+  .login-error { color: var(--danger); font-size: 0.85rem; text-align: center; display: none; }
+
+  /* APP */
+  #app { display: none; }
+  .header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between;
+  }
+  .header-logo { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); letter-spacing: 0.15em; }
+  .header-title { font-size: 1rem; font-weight: 600; color: var(--accent); }
+  .header-stats { display: flex; gap: 1.5rem; }
+  .stat { text-align: center; }
+  .stat-num { font-family: 'DM Mono', monospace; font-size: 1.1rem; font-weight: 500; color: var(--accent); }
+  .stat-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+  .logout-btn {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    border-radius: var(--radius); padding: 0.4rem 1rem; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;
+  }
+  .logout-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+  .main { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+
+  /* CATEGORY TABS */
+  .cat-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .cat-tab {
+    padding: 0.5rem 1.2rem; border-radius: 20px; font-size: 0.85rem; font-weight: 500;
+    cursor: pointer; border: 2px solid transparent; transition: all 0.2s; background: var(--surface);
+    border-color: var(--border); color: var(--muted);
+  }
+  .cat-tab.active { color: #fff; border-color: transparent; }
+  .cat-tab[data-cat=""].active { background: var(--accent); }
+  .cat-tab[data-cat="benjamin"].active { background: var(--cat-benjamin); }
+  .cat-tab[data-cat="alevin"].active { background: var(--cat-alevin); }
+  .cat-tab[data-cat="infantil"].active { background: var(--cat-infantil); }
+  .cat-tab[data-cat="cadete"].active { background: var(--cat-cadete); }
+  .cat-tab[data-cat="junior"].active { background: var(--cat-junior); }
+
+  /* TOOLBAR */
+  .toolbar { display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: center; flex-wrap: wrap; }
+  .search-wrap { flex: 1; min-width: 250px; position: relative; }
+  .search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--muted); }
+  .search-input {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 0.7rem 1rem 0.7rem 2.5rem;
+    color: var(--text); font-size: 0.9rem; outline: none; transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .filter-select {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    border-radius: var(--radius); padding: 0.7rem 1rem; font-size: 0.85rem; outline: none; cursor: pointer;
+  }
+  .btn-add {
+    background: var(--accent); color: #fff; border: none; border-radius: var(--radius);
+    padding: 0.7rem 1.5rem; font-weight: 600; font-size: 0.85rem; cursor: pointer; white-space: nowrap; transition: opacity 0.2s;
+  }
+  .btn-add:hover { opacity: 0.85; }
+
+  /* TABLE */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: var(--surface2); }
+  th {
+    padding: 0.8rem 1rem; text-align: left; font-family: 'DM Mono', monospace;
+    font-size: 0.7rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.88rem; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); cursor: pointer; }
+  .badge {
+    display: inline-block; padding: 0.2rem 0.7rem; border-radius: 20px;
+    font-size: 0.72rem; font-weight: 600; color: #fff;
+  }
+  .badge-benjamin { background: var(--cat-benjamin); }
+  .badge-alevin { background: var(--cat-alevin); }
+  .badge-infantil { background: var(--cat-infantil); }
+  .badge-cadete { background: var(--cat-cadete); }
+  .badge-junior { background: var(--cat-junior); }
+  .badge-guip { background: #e8f8ef; color: #1e8449; border: 1px solid #a9dfbf; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 10px; white-space: nowrap; }
+  .badge-noguip { background: #fef9e7; color: #b7770d; border: 1px solid #f9e79f; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 10px; white-space: nowrap; }
+  .empty-row td { text-align: center; color: var(--muted); padding: 3rem; }
+  .muted { color: var(--muted); font-size: 0.82rem; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    width: 700px; max-width: 95vw; max-height: 90vh; overflow-y: auto; padding: 2rem;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+  }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+  .modal-title { font-size: 1.1rem; font-weight: 600; }
+  .modal-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.4rem; }
+  .modal-close:hover { color: var(--text); }
+  .section-sep { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.15em; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); grid-column: 1/-1; margin-top: 0.5rem; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-family: 'DM Mono', monospace; }
+  .form-input, .form-select {
+    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 0.7rem 0.9rem; color: var(--text); font-size: 0.9rem; outline: none; transition: border-color 0.2s; width: 100%;
+  }
+  .form-input:focus, .form-select:focus { border-color: var(--accent); }
+  .form-check { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.3rem; }
+  .form-check input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+  .modal-footer { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+  .btn-cancel { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: var(--radius); padding: 0.7rem 1.5rem; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; }
+  .btn-cancel:hover { border-color: var(--text); color: var(--text); }
+  .btn-save { background: var(--accent); color: #fff; border: none; border-radius: var(--radius); padding: 0.7rem 1.5rem; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: opacity 0.2s; }
+  .btn-save:hover { opacity: 0.85; }
+  .btn-delete { background: none; border: 1px solid var(--danger); color: var(--danger); border-radius: var(--radius); padding: 0.7rem 1.5rem; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; margin-right: auto; }
+  .btn-delete:hover { background: var(--danger); color: #fff; }
+
+  .toast {
+    position: fixed; bottom: 2rem; right: 2rem; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.5rem;
+    font-size: 0.9rem; z-index: 200; transform: translateY(100px); opacity: 0; transition: all 0.3s;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: var(--success); color: var(--success); }
+  .toast.error { border-color: var(--danger); color: var(--danger); }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <span>Club Ciclista Irunés</span>
+      <h1>Gestión de Corredores</h1>
+    </div>
+    <div>
+      <div class="login-label">Código de acceso</div>
+      <input type="password" class="login-input" id="login-input" placeholder="••••••" maxlength="10" />
+    </div>
+    <button class="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-error" id="login-error">Código incorrecto</div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="header">
+    <div>
+      <div class="header-logo">CC Irunés</div>
+      <div class="header-title">Gestión de Corredores</div>
+    </div>
+    <div class="header-stats">
+      <div class="stat"><div class="stat-num" id="stat-total">—</div><div class="stat-label">Total</div></div>
+      <div class="stat"><div class="stat-num" id="stat-benjamin" style="color:var(--cat-benjamin)">—</div><div class="stat-label">Benjamín</div></div>
+      <div class="stat"><div class="stat-num" id="stat-alevin" style="color:var(--cat-alevin)">—</div><div class="stat-label">Alevín</div></div>
+      <div class="stat"><div class="stat-num" id="stat-infantil" style="color:var(--cat-infantil)">—</div><div class="stat-label">Infantil</div></div>
+      <div class="stat"><div class="stat-num" id="stat-cadete" style="color:var(--cat-cadete)">—</div><div class="stat-label">Cadete</div></div>
+      <div class="stat"><div class="stat-num" id="stat-junior" style="color:var(--cat-junior)">—</div><div class="stat-label">Junior</div></div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Salir</button>
+  </div>
+
+  <div class="main">
+    <div class="cat-tabs">
+      <div class="cat-tab active" data-cat="" onclick="setCategoria('')">Todos</div>
+      <div class="cat-tab" data-cat="benjamin" onclick="setCategoria('benjamin')">Benjamín</div>
+      <div class="cat-tab" data-cat="alevin" onclick="setCategoria('alevin')">Alevín</div>
+      <div class="cat-tab" data-cat="infantil" onclick="setCategoria('infantil')">Infantil</div>
+      <div class="cat-tab" data-cat="cadete" onclick="setCategoria('cadete')">Cadete</div>
+      <div class="cat-tab" data-cat="junior" onclick="setCategoria('junior')">Junior</div>
+    </div>
+
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" class="search-input" id="search" placeholder="Buscar por nombre, DNI..." oninput="renderTable()" />
+      </div>
+      <select class="filter-select" id="filter-sexo" onchange="renderTable()">
+        <option value="">Todos</option>
+        <option value="masculino">Masculino</option>
+        <option value="femenino">Femenino</option>
+      </select>
+      <select class="filter-select" id="filter-guip" onchange="renderTable()">
+        <option value="">Guipuzcoanos y no</option>
+        <option value="true">Guipuzcoanos</option>
+        <option value="false">No guipuzcoanos</option>
+      </select>
+      <button class="btn-add" onclick="openModal(null)">+ Nuevo corredor</button>
+      <button class="btn-add" style="background:var(--success)" onclick="exportExcel()">↓ Excel</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('apellido1')" style="cursor:pointer">Nombre <span id="sort-apellido1"></span></th>
+            <th>DNI</th>
+            <th onclick="sortBy('fecha_nacimiento')" style="cursor:pointer">F. Nacimiento <span id="sort-fecha_nacimiento"></span></th>
+            <th onclick="sortBy('categoria')" style="cursor:pointer">Categoría <span id="sort-categoria"></span></th>
+            <th onclick="sortBy('sexo')" style="cursor:pointer">Sexo <span id="sort-sexo"></span></th>
+            <th>Tutor</th>
+            <th>Contacto</th>
+            <th>Guip.</th><th id="th-licencia" style="display:none">Licencia</th><th id="th-uci" style="display:none">UCI ID</th><th>Lic.</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Nuevo corredor</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="form-grid">
+      <div class="section-sep">Datos del corredor</div>
+      <div class="form-group">
+        <label class="form-label">Nombre</label>
+        <input type="text" class="form-input" id="f-nombre" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Primer apellido</label>
+        <input type="text" class="form-input" id="f-ap1" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Segundo apellido</label>
+        <input type="text" class="form-input" id="f-ap2" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">DNI</label>
+        <input type="text" class="form-input" id="f-dni" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha nacimiento</label>
+        <input type="date" class="form-input" id="f-fnac" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Categoría</label>
+        <select class="form-select" id="f-cat">
+          <option value="benjamin">Benjamín</option>
+          <option value="alevin">Alevín</option>
+          <option value="infantil">Infantil</option>
+          <option value="cadete">Cadete</option>
+          <option value="junior">Junior</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sexo</label>
+        <select class="form-select" id="f-sexo">
+          <option value="masculino">Masculino</option>
+          <option value="femenino">Femenino</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Móvil</label>
+        <input type="text" class="form-input" id="f-movil" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Colegio</label>
+        <input type="text" class="form-input" id="f-colegio" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="f-email" />
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Dirección</label>
+        <input type="text" class="form-input" id="f-dir" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Localidad</label>
+        <input type="text" class="form-input" id="f-loc" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Código postal</label>
+        <input type="text" class="form-input" id="f-cp" />
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Nº Cuenta (IBAN)</label>
+        <input type="text" class="form-input" id="f-cuenta" />
+      </div>
+      <div class="form-group full">
+        <div class="form-check">
+          <input type="checkbox" id="f-guip" checked />
+          <label for="f-guip">Guipuzcoano</label>
+        </div>
+      </div>
+      <div class="section-sep">Licencia UCI</div>
+      <div class="form-group">
+        <label class="form-label">Nº Licencia</label>
+        <input type="text" class="form-input" id="f-licencia" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">UCI ID</label>
+        <input type="text" class="form-input" id="f-uci" />
+      </div>
+
+      <div class="section-sep">Tutor 1</div>
+      <div class="form-group">
+        <label class="form-label">Nombre</label>
+        <input type="text" class="form-input" id="f-t1nombre" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Primer apellido</label>
+        <input type="text" class="form-input" id="f-t1ap1" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Segundo apellido</label>
+        <input type="text" class="form-input" id="f-t1ap2" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">DNI</label>
+        <input type="text" class="form-input" id="f-t1dni" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Móvil</label>
+        <input type="text" class="form-input" id="f-t1movil" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="f-t1email" />
+      </div>
+
+      <div class="section-sep">Tutor 2 (opcional)</div>
+      <div class="form-group">
+        <label class="form-label">Nombre</label>
+        <input type="text" class="form-input" id="f-t2nombre" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Primer apellido</label>
+        <input type="text" class="form-input" id="f-t2ap1" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Segundo apellido</label>
+        <input type="text" class="form-input" id="f-t2ap2" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">DNI</label>
+        <input type="text" class="form-input" id="f-t2dni" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Móvil</label>
+        <input type="text" class="form-input" id="f-t2movil" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="f-t2email" />
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-delete" id="btn-delete" onclick="deleteCorredor()" style="display:none">Eliminar</button>
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveCorredor()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- LICENCIA MODAL -->
+<div class="modal-overlay" id="lic-modal" style="z-index:200">
+  <div class="modal" style="width:800px;max-width:95vw">
+    <div class="modal-header">
+      <div class="modal-title">Licencia — <span id="lic-nombre"></span></div>
+      <button class="modal-close" onclick="document.getElementById('lic-modal').classList.remove('open')">×</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;min-height:300px">
+      <div style="background:#f5f5f5;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden">
+        <img id="lic-img1" src="" style="max-width:100%;max-height:400px;object-fit:contain" />
+      </div>
+      <div style="background:#f5f5f5;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden">
+        <img id="lic-img2" src="" style="max-width:100%;max-height:400px;object-fit:contain" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <a id="lic-dl1" href="" download target="_blank" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:0.7rem 1.5rem;font-weight:600;font-size:0.9rem;cursor:pointer;text-decoration:none" onclick="this.href=document.getElementById('lic-img1').src">↓ Cara A</a>
+      <a id="lic-dl2" href="" download target="_blank" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:0.7rem 1.5rem;font-weight:600;font-size:0.9rem;cursor:pointer;text-decoration:none" onclick="this.href=document.getElementById('lic-img2').src">↓ Cara B</a>
+      <button class="btn-cancel" onclick="document.getElementById('lic-modal').classList.remove('open')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://dbydtwkzknbpifneznsu.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRieWR0d2t6a25icGlmbmV6bnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMjMwODIsImV4cCI6MjA5MDc5OTA4Mn0.HcTWBEaI-2EH66mAUAaEM2ppzDG3eCd1ANjopNZdt1g';
+  const ADMIN_CODE = '2121';
+
+  let corredores = [];
+  let sortField = 'apellido1';
+  let sortDir = 1;
+  let editingId = null;
+  let categoriaActiva = '';
+
+  function doLogin() {
+    if (document.getElementById('login-input').value === ADMIN_CODE) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      loadCorredores();
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+    }
+  }
+  document.getElementById('login-input').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  function doLogout() {
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('login-input').value = '';
+  }
+
+  async function sbFetch(method, path, body) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+      method,
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
+  }
+
+  async function loadCorredores() {
+    try {
+      corredores = await sbFetch('GET', 'corredores?select=*&order=apellido1.asc');
+      updateStats();
+      renderTable();
+    } catch(e) {
+      showToast('Error: ' + e.message, 'error');
+    }
+  }
+
+  function updateStats() {
+    document.getElementById('stat-total').textContent = corredores.length;
+    ['benjamin','alevin','infantil','cadete','junior'].forEach(c => {
+      document.getElementById('stat-' + c).textContent = corredores.filter(x => x.categoria === c).length;
+    });
+  }
+
+  function sortBy(field) {
+    if (sortField === field) { sortDir *= -1; } else { sortField = field; sortDir = 1; }
+    document.querySelectorAll('[id^="sort-"]').forEach(el => el.textContent = '');
+    const el = document.getElementById('sort-' + field);
+    if (el) el.textContent = sortDir === 1 ? ' ↑' : ' ↓';
+    renderTable();
+  }
+
+  function setCategoria(cat) {
+    categoriaActiva = cat;
+    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`.cat-tab[data-cat="${cat}"]`).classList.add('active');
+    const showLic = cat === 'cadete' || cat === 'junior';
+    document.getElementById('th-licencia').style.display = showLic ? '' : 'none';
+    document.getElementById('th-uci').style.display = showLic ? '' : 'none';
+    renderTable();
+  }
+
+  function catBadge(cat) {
+    const labels = { benjamin:'Benjamín', alevin:'Alevín', infantil:'Infantil', cadete:'Cadete', junior:'Junior' };
+    return `<span class="badge badge-${cat}">${labels[cat] || cat}</span>`;
+  }
+
+  function renderTable() {
+    const q = document.getElementById('search').value.toLowerCase();
+    const sexo = document.getElementById('filter-sexo').value;
+    const guip = document.getElementById('filter-guip').value;
+
+    let filtered = corredores.filter(c => {
+      const match = !q ||
+        (c.nombre || '').toLowerCase().includes(q) ||
+        (c.apellido1 || '').toLowerCase().includes(q) ||
+        (c.apellido2 || '').toLowerCase().includes(q) ||
+        (c.dni || '').toLowerCase().includes(q);
+      const matchCat = !categoriaActiva || c.categoria === categoriaActiva;
+      const matchSexo = !sexo || c.sexo === sexo;
+      const matchGuip = !guip || String(c.guipuzcoano) === guip;
+      return match && matchCat && matchSexo && matchGuip;
+    });
+
+    filtered.sort((a, b) => {
+      const va = (a[sortField] || '').toString();
+      const vb = (b[sortField] || '').toString();
+      return va < vb ? -sortDir : va > vb ? sortDir : 0;
+    });
+    const tbody = document.getElementById('table-body');
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Sin resultados</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(c => {
+      const idx = corredores.indexOf(c);
+      const nombre = `<strong>${c.apellido1 || ''} ${c.apellido2 || ''}</strong>, ${c.nombre || ''}`;
+      const fnac = c.fecha_nacimiento ? new Date(c.fecha_nacimiento).toLocaleDateString('es-ES') : '—';
+      const tutor = c.tutor1_nombre ? `${c.tutor1_nombre} ${c.tutor1_apellido1 || ''}` : '—';
+      const contacto = c.tutor1_movil || c.tutor1_email || '—';
+      const guipBadge = c.guipuzcoano ? '<span class="badge-guip">Guip.</span>' : '<span class="badge-noguip">No guip.</span>';
+      const showLic = categoriaActiva === 'cadete' || categoriaActiva === 'junior';
+      const licCell = showLic ? `<td class="muted">${c.num_licencia || '—'}</td><td class="muted">${c.uci_id || '—'}</td>` : '';
+      return `<tr onclick="openModal(${idx})">
+        <td>${nombre}</td>
+        <td class="muted">${c.dni || '—'}</td>
+        <td class="muted">${fnac}</td>
+        <td>${catBadge(c.categoria)}</td>
+        <td class="muted">${c.sexo || '—'}</td>
+        <td>${tutor}</td>
+        <td class="muted">${contacto}</td>
+        <td>${guipBadge}</td>${licCell}
+        <td>${c.licencia_nombre ? `<button onclick="event.stopPropagation();verLicencia('${c.licencia_nombre}')" style="background:var(--accent2);color:#fff;border:none;border-radius:6px;padding:0.3rem 0.7rem;cursor:pointer;font-size:0.75rem">📄 Ver</button>` : '—'}</td>
+      </tr>`
+    }).join('');
+  }
+
+  function openModal(idx) {
+    const c = idx !== null ? corredores[idx] : null;
+    editingId = c ? c.id : null;
+    document.getElementById('modal-title').textContent = c ? `${c.nombre} ${c.apellido1 || ''}` : 'Nuevo corredor';
+    document.getElementById('btn-delete').style.display = c ? 'block' : 'none';
+
+    document.getElementById('f-nombre').value = c?.nombre || '';
+    document.getElementById('f-ap1').value = c?.apellido1 || '';
+    document.getElementById('f-ap2').value = c?.apellido2 || '';
+    document.getElementById('f-dni').value = c?.dni || '';
+    document.getElementById('f-fnac').value = c?.fecha_nacimiento || '';
+    document.getElementById('f-cat').value = c?.categoria || 'benjamin';
+    document.getElementById('f-sexo').value = c?.sexo || 'masculino';
+    document.getElementById('f-movil').value = c?.movil || '';
+    document.getElementById('f-colegio').value = c?.colegio || '';
+    document.getElementById('f-email').value = c?.email || '';
+    document.getElementById('f-dir').value = c?.direccion || '';
+    document.getElementById('f-loc').value = c?.localidad || '';
+    document.getElementById('f-cp').value = c?.codigo_postal || '';
+    document.getElementById('f-cuenta').value = c?.numero_cuenta || '';
+    document.getElementById('f-guip').checked = c?.guipuzcoano !== false;
+    document.getElementById('f-licencia').value = c?.num_licencia || '';
+    document.getElementById('f-uci').value = c?.uci_id || '';
+    document.getElementById('f-t1nombre').value = c?.tutor1_nombre || '';
+    document.getElementById('f-t1ap1').value = c?.tutor1_apellido1 || '';
+    document.getElementById('f-t1ap2').value = c?.tutor1_apellido2 || '';
+    document.getElementById('f-t1dni').value = c?.tutor1_dni || '';
+    document.getElementById('f-t1movil').value = c?.tutor1_movil || '';
+    document.getElementById('f-t1email').value = c?.tutor1_email || '';
+    document.getElementById('f-t2nombre').value = c?.tutor2_nombre || '';
+    document.getElementById('f-t2ap1').value = c?.tutor2_apellido1 || '';
+    document.getElementById('f-t2ap2').value = c?.tutor2_apellido2 || '';
+    document.getElementById('f-t2dni').value = c?.tutor2_dni || '';
+    document.getElementById('f-t2movil').value = c?.tutor2_movil || '';
+    document.getElementById('f-t2email').value = c?.tutor2_email || '';
+
+    document.getElementById('modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+    editingId = null;
+  }
+
+  function getFormData() {
+    const v = id => document.getElementById(id).value.trim() || null;
+    return {
+      nombre: v('f-nombre'), apellido1: v('f-ap1'), apellido2: v('f-ap2'),
+      dni: v('f-dni'), fecha_nacimiento: v('f-fnac'),
+      categoria: v('f-cat'), sexo: v('f-sexo'),
+      movil: v('f-movil'), colegio: v('f-colegio'), email: v('f-email'),
+      direccion: v('f-dir'), localidad: v('f-loc'), codigo_postal: v('f-cp'),
+      numero_cuenta: v('f-cuenta'),
+      guipuzcoano: document.getElementById('f-guip').checked,
+      num_licencia: document.getElementById('f-licencia').value.trim() || null,
+      uci_id: document.getElementById('f-uci').value.trim() || null,
+      tutor1_nombre: v('f-t1nombre'), tutor1_apellido1: v('f-t1ap1'), tutor1_apellido2: v('f-t1ap2'),
+      tutor1_dni: v('f-t1dni'), tutor1_movil: v('f-t1movil'), tutor1_email: v('f-t1email'),
+      tutor2_nombre: v('f-t2nombre'), tutor2_apellido1: v('f-t2ap1'), tutor2_apellido2: v('f-t2ap2'),
+      tutor2_dni: v('f-t2dni'), tutor2_movil: v('f-t2movil'), tutor2_email: v('f-t2email'),
+      temporada: '2025-2026', activo: true
+    };
+  }
+
+  async function saveCorredor() {
+    const data = getFormData();
+    try {
+      if (editingId) {
+        await sbFetch('PATCH', `corredores?id=eq.${editingId}`, data);
+        showToast('Corredor actualizado', 'success');
+      } else {
+        await sbFetch('POST', 'corredores', data);
+        showToast('Corredor creado', 'success');
+      }
+      closeModal();
+      await loadCorredores();
+    } catch(e) {
+      showToast('Error: ' + e.message, 'error');
+    }
+  }
+
+  async function deleteCorredor() {
+    if (!editingId || !confirm('¿Eliminar este corredor?')) return;
+    try {
+      await sbFetch('DELETE', `corredores?id=eq.${editingId}`);
+      showToast('Corredor eliminado', 'success');
+      closeModal();
+      await loadCorredores();
+    } catch(e) {
+      showToast('Error: ' + e.message, 'error');
+    }
+  }
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  const STORAGE_URL = 'https://dbydtwkzknbpifneznsu.supabase.co/storage/v1/object/public/Licencias';
+
+  function verLicencia(nombre) {
+    const url1 = `${STORAGE_URL}/${nombre}1.png`;
+    const url2 = `${STORAGE_URL}/${nombre}2.png`;
+    document.getElementById('lic-img1').src = url1;
+    document.getElementById('lic-img2').src = url2;
+    document.getElementById('lic-dl1').href = url1;
+    document.getElementById('lic-dl2').href = url2;
+    document.getElementById('lic-nombre').textContent = nombre;
+    document.getElementById('lic-modal').classList.add('open');
+  }
+
+  function verLicencia(nombre) {
+    const url1 = `${STORAGE_URL}/${nombre}1.png`;
+    const url2 = `${STORAGE_URL}/${nombre}2.png`;
+    document.getElementById('lic-img1').src = url1;
+    document.getElementById('lic-img2').src = url2;
+    document.getElementById('lic-nombre').textContent = nombre;
+    document.getElementById('lic-modal').classList.add('open');
+  }
+
+  function exportExcel() {
+    const cat = categoriaActiva || 'todos';
+    const q = document.getElementById('search').value.toLowerCase();
+    const sexo = document.getElementById('filter-sexo').value;
+    const guip = document.getElementById('filter-guip').value;
+
+    let filtered = corredores.filter(c => {
+      const match = !q ||
+        (c.nombre || '').toLowerCase().includes(q) ||
+        (c.apellido1 || '').toLowerCase().includes(q) ||
+        (c.apellido2 || '').toLowerCase().includes(q) ||
+        (c.dni || '').toLowerCase().includes(q);
+      const matchCat = !categoriaActiva || c.categoria === categoriaActiva;
+      const matchSexo = !sexo || c.sexo === sexo;
+      const matchGuip = !guip || String(c.guipuzcoano) === guip;
+      return match && matchCat && matchSexo && matchGuip;
+    });
+
+    const showLic = categoriaActiva === 'cadete' || categoriaActiva === 'junior';
+
+    const headers = ['Apellido1', 'Apellido2', 'Nombre', 'DNI', 'F.Nacimiento', 'Categoría', 'Sexo',
+      'Móvil', 'Email', 'Localidad', 'Colegio', 'Guipuzcoano',
+      'Tutor1 Nombre', 'Tutor1 Apellido1', 'Tutor1 Apellido2', 'Tutor1 DNI', 'Tutor1 Móvil', 'Tutor1 Email',
+      'Tutor2 Nombre', 'Tutor2 Apellido1', 'Tutor2 Apellido2', 'Tutor2 DNI', 'Tutor2 Móvil', 'Tutor2 Email',
+      'IBAN'];
+    if (showLic) { headers.push('Nº Licencia', 'UCI ID'); }
+
+    const rows = filtered.map(c => {
+      const row = [
+        c.apellido1 || '', c.apellido2 || '', c.nombre || '', c.dni || '',
+        c.fecha_nacimiento || '', c.categoria || '', c.sexo || '',
+        c.movil || '', c.email || '', c.localidad || '', c.colegio || '',
+        c.guipuzcoano ? 'Sí' : 'No',
+        c.tutor1_nombre || '', c.tutor1_apellido1 || '', c.tutor1_apellido2 || '',
+        c.tutor1_dni || '', c.tutor1_movil || '', c.tutor1_email || '',
+        c.tutor2_nombre || '', c.tutor2_apellido1 || '', c.tutor2_apellido2 || '',
+        c.tutor2_dni || '', c.tutor2_movil || '', c.tutor2_email || '',
+        c.numero_cuenta || ''
+      ];
+      if (showLic) { row.push(c.num_licencia || '', c.uci_id || ''); }
+      return row;
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Corredores');
+    XLSX.writeFile(wb, `corredores_${cat}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  }
+
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal')) closeModal();
+  });
+</script>
+</body>
+</html>
